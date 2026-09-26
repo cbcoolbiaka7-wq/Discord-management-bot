@@ -1,3 +1,4 @@
+
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
@@ -652,7 +653,7 @@ function buildHelpEmbed(guildData) {
     .setTitle('📖 Command Help')
     .setDescription(`Most commands are slash commands — type \`/\` to see them with autocomplete and descriptions.\nA few core utility commands also work with the prefix \`${prefix}\` (${prefix}help, ${prefix}ping, ${prefix}afk).`)
     .addFields(
-      { name: '🛡️ Security', value: '`/antinuke` `/lockdown` `/whitelist`', inline: false },
+      { name: '🛡️ Security', value: '`/antinuke` `/lockdown` `/whitelist` `/unwhitelist`', inline: false },
       { name: '🔨 Moderation', value: '`/warn` `/unwarn` `/warnings` `/timeout` `/untimeout` `/kick` `/ban` `/unban` `/softban` `/purge` `/slowmode` `/lock` `/unlock` `/nickname` `/case`', inline: false },
       { name: '🎫 Tickets', value: '`/ticket-panel` `/ticket-add` `/ticket-remove` `/ticket-close`', inline: false },
       { name: '💤 AFK', value: '`/afk`', inline: false },
@@ -739,10 +740,10 @@ const commands = [
   new SlashCommandBuilder().setName('lockdown').setDescription('Emergency-lock all channels in the server.')
     .addSubcommand(sc => sc.setName('start').setDescription('Start emergency lockdown'))
     .addSubcommand(sc => sc.setName('end').setDescription('End emergency lockdown')),
-  new SlashCommandBuilder().setName('whitelist').setDescription('Manage the anti-nuke whitelist.')
-    .addSubcommand(sc => sc.setName('add').setDescription('Whitelist a user').addUserOption(o => o.setName('user').setDescription('User to whitelist').setRequired(true)))
-    .addSubcommand(sc => sc.setName('remove').setDescription('Remove a user from the whitelist').addUserOption(o => o.setName('user').setDescription('User').setRequired(true)))
-    .addSubcommand(sc => sc.setName('list').setDescription('List whitelisted users')),
+  new SlashCommandBuilder().setName('whitelist').setDescription('Whitelist a user from anti-nuke (protects them from auto-kick/ban). Leave user blank to view the list.')
+    .addUserOption(o => o.setName('user').setDescription('User to whitelist').setRequired(false)),
+  new SlashCommandBuilder().setName('unwhitelist').setDescription('Remove a user from the anti-nuke whitelist.')
+    .addUserOption(o => o.setName('user').setDescription('User to remove').setRequired(true)),
 
   // ---------- Tickets ----------
   new SlashCommandBuilder().setName('ticket-panel').setDescription('Post the ticket creation panel in this channel.'),
@@ -1147,23 +1148,29 @@ async function handleModerationOrConfigCommand(interaction, guildData) {
 
   if (commandName === 'whitelist') {
     if (!requireAdmin(interaction, guildData)) return;
-    const sub = interaction.options.getSubcommand();
     const antinuke = guildData.config.antinuke;
-    if (sub === 'add') {
-      const user = interaction.options.getUser('user');
-      if (!antinuke.whitelistUsers.includes(user.id)) antinuke.whitelistUsers.push(user.id);
-      db.save();
-      await interaction.reply(`Whitelisted ${fmtUser(user)}.`);
-    } else if (sub === 'remove') {
-      const user = interaction.options.getUser('user');
-      antinuke.whitelistUsers = antinuke.whitelistUsers.filter(id => id !== user.id);
-      db.save();
-      await interaction.reply(`Removed ${fmtUser(user)} from the whitelist.`);
-    } else if (sub === 'list') {
+    const user = interaction.options.getUser('user');
+
+    if (!user) {
       const embed = baseEmbed(COLOR).setTitle('Anti-Nuke Whitelist')
         .setDescription(antinuke.whitelistUsers.length ? antinuke.whitelistUsers.map(id => `<@${id}>`).join('\n') : 'No users whitelisted.');
       await interaction.reply({ embeds: [embed] });
+      return;
     }
+
+    if (!antinuke.whitelistUsers.includes(user.id)) antinuke.whitelistUsers.push(user.id);
+    db.save();
+    await interaction.reply(`✅ ${fmtUser(user)} is now whitelisted — anti-nuke will never auto-kick or auto-ban them, no matter what they trigger.`);
+    return;
+  }
+
+  if (commandName === 'unwhitelist') {
+    if (!requireAdmin(interaction, guildData)) return;
+    const antinuke = guildData.config.antinuke;
+    const user = interaction.options.getUser('user');
+    antinuke.whitelistUsers = antinuke.whitelistUsers.filter(id => id !== user.id);
+    db.save();
+    await interaction.reply(`Removed ${fmtUser(user)} from the whitelist.`);
     return;
   }
 
