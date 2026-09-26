@@ -1,4 +1,3 @@
-
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
@@ -740,7 +739,7 @@ const commands = [
   new SlashCommandBuilder().setName('lockdown').setDescription('Emergency-lock all channels in the server.')
     .addSubcommand(sc => sc.setName('start').setDescription('Start emergency lockdown'))
     .addSubcommand(sc => sc.setName('end').setDescription('End emergency lockdown')),
-  new SlashCommandBuilder().setName('whitelist').setDescription('Whitelist a user from anti-nuke (protects them from auto-kick/ban). Leave user blank to view the list.')
+  new SlashCommandBuilder().setName('whitelist').setDescription('Whitelist a user from anti-nuke. Leave user blank to view the list.')
     .addUserOption(o => o.setName('user').setDescription('User to whitelist').setRequired(false)),
   new SlashCommandBuilder().setName('unwhitelist').setDescription('Remove a user from the anti-nuke whitelist.')
     .addUserOption(o => o.setName('user').setDescription('User to remove').setRequired(true)),
