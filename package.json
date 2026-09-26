@@ -1,0 +1,17 @@
+{
+  "name": "discord-management-bot",
+  "version": "1.0.0",
+  "description": "All-in-one moderation, security, ticket and management bot",
+  "main": "index.js",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.16.3",
+    "dotenv": "^16.4.5"
+  }
+}
